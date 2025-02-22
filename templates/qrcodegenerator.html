@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code 生成器</title>
+
+    <style>
+         body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        input, select {
+            padding: 10px;
+            width: 80%;
+            font-size: 16px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        label {
+            font-size: 16px;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+
+        button {
+            grid-column: span 2;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .data-input{
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            width: 225%;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <h2>QR Code 生成器</h2>
+    <div class="form-container">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="data-input">
+                <label for="data">輸入網址或文字</label>
+                <input type="text" name="data" placeholder="輸入網址或文字" value="{{ request.POST.data }}" required><br>
+            </div>
+            <p></p>
+            <div class="input-group">
+                <label for="version">QR Code 密度 (1-40):</label>
+                <input type="number" name="version" id="version" value="{{ request.POST.version|default:1 }}" min="1" max="40"><br>
+            </div>
+
+            <div class="input-group">
+                <label for="error_correction">容錯率 (1=最低, 4=最高):</label>
+                <input type="number" name="error_correction" id="error_correction" value="{{ request.POST.error_correction|default:1 }}" min="1" max="4"><br>
+            </div>
+
+            <div class="input-group">
+                <label for="box_size">尺寸 (1-10):</label>
+                <input type="number" name="box_size" id="box_size" value="{{ request.POST.box_size|default:10 }}" min="1" max="10"><br>
+            </div>
+
+            <div class="input-group">
+                <label for="border">邊界 (1-10):</label>
+                <input type="number" name="border" id="border" value="{{ request.POST.border|default:4 }}" min="1" max="10"><br>
+            </div>
+            
+            <div class="input-group">
+                <label for="color_a">顏色 A :</label>
+                <input type="color" name="color_a" id="color_a" value="{{ request.POST.color_a|default:'#ff0000' }}"><br>
+            </div>
+
+            <div class="input-group">
+                <label for="color_b">顏色 B :</label>
+                <input type="color" name="color_b" id="color_b" value="{{ request.POST.color_b|default:'#0000ff' }}"><br>
+            </div>
+
+            <div class="input-group">
+                <label for="module_drawer">樣式:</label>
+                <select name="module_drawer" id="module_drawer">
+                    <option value="rounded" {% if request.POST.module_drawer == 'rounded' %}selected{% endif %}>圓角</option>
+                    <option value="square" {% if request.POST.module_drawer == 'square' %}selected{% endif %}>方形</option>
+                    <option value="circle" {% if request.POST.module_drawer == 'circle' %}selected{% endif %}>圓形</option>
+                    <option value="bars" {% if request.POST.module_drawer == 'bars' %}selected{% endif %}>條型</option>
+                    <option value="GappedSquare" {% if request.POST.module_drawer == 'GappedSquare' %}selected{% endif %}>間隙正方形</option>
+                    <option value="HorizontalBars" {% if request.POST.module_drawer == 'HorizontalBars' %}selected{% endif %}>水平條形</option>
+                </select><br>
+            </div>
+            
+            <div class="input-group">
+                <label for="color_mask">顏色遮罩:</label>
+                <select name="color_mask" id="color_mask">
+                    <option value="solid" {% if request.POST.color_mask == 'solid' %}selected{% endif %}>純色填充</option>
+                    <option value="radial" {% if request.POST.color_mask == 'radial' %}selected{% endif %}>放射漸層</option>
+                    <option value="vertical" {% if request.POST.color_mask == 'vertical' %}selected{% endif %}>垂直漸層</option>
+                    <option value="horizontal" {% if request.POST.color_mask == 'horizontal' %}selected{% endif %}>水平漸層</option>
+                    <option value="SquareGradiant" {% if request.POST.color_mask == 'SquareGradiant' %}selected{% endif %}>方形放射漸層</option>
+                </select><br>
+            </div>
+            <div class="input-group">
+                <label for="logo">選擇 Logo 圖片:</label>
+                <input type="file" name="logo" accept="image/*"><br>
+            </div>
+
+            <button  type="submit">生成 QR Code</button>
+    </form>
+
+    {% if qr_code %}
+    <h3>您的 QR Code：</h3>
+    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code">
+    <p>&nbsp;</p>
+    <a href="data:image/png;base64,{{ qr_code }}" download="qr_code.png">
+        <button class="download-btn">下載 QR Code</button>
+
+    </a>
+    {% endif %}
+    <div style="height: 100px;"></div>
+</body>
+</html>
